@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: appfrontend
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend  
+  namespace: appfrontend
+spec:
+  selector: 
+    matchLabels:
+      app: vuefullstack
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: vuefullstack
+        tier: frontend
+    spec:
+      containers:
+        - name: vuefullstack
+          image: mrizkiprmn/frontend-jenkins:master
+          ports:
+            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: appfrontend
+spec:
+  selector:
+    app: vuefullstack
+    tier: frontend
+  type: NodePort
+  ports:
+    - port: 8181
+      targetPort: 8080
+      nodePort: 30789
+      protocol: TCP
+      name: frontendport

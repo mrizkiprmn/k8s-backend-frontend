@@ -1,0 +1,89 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: appbackend
+
+---
+apiVersion: v1
+data:
+    DBUSER: "rizkipermana"
+    DBPASSWORD: "admin123"
+    DBNAME: "prods"
+    DBHOST: "34.224.212.118"
+    DBPORT: "5432"
+    JWT_KEYS: "inipunyarizki"
+    CLOUD_KEY: "327521863331962"
+    CLOUD_SECRET: "sr374waC435g04cuHmrWIqfEUE4"
+    CLOUD_NAME: "coffeshop"
+    REDIS_HOST: "34.224.212.118"
+    REDIS_PORT: "6379"
+
+kind: ConfigMap
+metadata:
+  name: env-backend
+  namespace: appbackend
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: appbackend
+spec:
+  selector:
+    matchLabels:
+      app: backendexpress
+      tier: backend
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: backendexpress
+        tier: backend
+    spec:
+      containers:
+        - name: backendexpress
+          image:  mrizkiprmn/backend-jenkins:master
+          ports:
+            - containerPort: 8888
+          envFrom:
+            - configMapRef:
+                name: env-backend
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8888
+            initialDelaySecond: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8888
+            initialDelaySecond: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 3
+        
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: appbackend
+spec:
+  selector:
+    app: backendexpress
+    tier: backend
+  type: NodePort
+  ports:
+    - port: 8282
+      targetPort: 8888
+      nodePort: 30678
+      protocol: TCP
+      name: backendport
